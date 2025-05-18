@@ -16,5 +16,3 @@ pyarrow
 datasets
 
 # Language model for spaCy
-# This line ensures the user knows to download it after install
-# python -m spacy download en_core_web_sm
