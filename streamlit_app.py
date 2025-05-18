@@ -4,17 +4,18 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from wordcloud import WordCloud
 import os
-from src.preprocess import preprocess_dataframe
-from src.skill_extractor import extract_skills
-
-import spacy
 import subprocess
+import spacy
 
+# Ensure spaCy model is available
 try:
     nlp = spacy.load("en_core_web_sm")
 except OSError:
     subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
     nlp = spacy.load("en_core_web_sm")
+
+from src.preprocess import preprocess_dataframe
+from src.skill_extractor import extract_skills
 
 st.set_page_config(page_title="ML Job Market Analyzer", layout="wide")
 st.title("📈 ML Job Market Analyzer")
