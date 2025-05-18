@@ -1,8 +1,10 @@
 # Core dependencies
 pandas
 matplotlib
+seaborn
 wordcloud
 spacy
+streamlit
 
 # For Parquet file support
 pyarrow
