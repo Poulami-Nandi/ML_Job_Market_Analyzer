@@ -7,6 +7,15 @@ import os
 from src.preprocess import preprocess_dataframe
 from src.skill_extractor import extract_skills
 
+import spacy
+import subprocess
+
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
+    nlp = spacy.load("en_core_web_sm")
+
 st.set_page_config(page_title="ML Job Market Analyzer", layout="wide")
 st.title("📈 ML Job Market Analyzer")
 
