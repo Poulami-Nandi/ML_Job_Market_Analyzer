@@ -6,12 +6,12 @@ from wordcloud import WordCloud
 import os
 import subprocess
 import spacy
+from spacy.cli import download
 
-# Ensure spaCy model is available
 try:
     nlp = spacy.load("en_core_web_sm")
 except OSError:
-    subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
+    download("en_core_web_sm")
     nlp = spacy.load("en_core_web_sm")
 
 from src.preprocess import preprocess_dataframe
