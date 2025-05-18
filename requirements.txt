@@ -1,0 +1,18 @@
+# Core dependencies
+pandas
+matplotlib
+wordcloud
+spacy
+
+# For Parquet file support
+pyarrow
+
+# For testing
+unittest; python_version >= '3.0'
+
+# Hugging Face dataset (optional)
+datasets
+
+# Language model for spaCy
+# This line ensures the user knows to download it after install
+# python -m spacy download en_core_web_sm
