@@ -8,7 +8,7 @@ spacy
 pyarrow
 
 # For testing
-unittest; python_version >= '3.0'
+#unittest; python_version >= '3.0'
 
 # Hugging Face dataset (optional)
 datasets
