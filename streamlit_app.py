@@ -7,12 +7,11 @@ import os
 import subprocess
 import spacy
 from spacy.cli import download
+import spacy
 
-try:
-    nlp = spacy.load("en_core_web_sm")
-except OSError:
-    download("en_core_web_sm")
-    nlp = spacy.load("en_core_web_sm")
+# Load the model as a package (it’s installed with pip via requirements.txt)
+nlp = spacy.load("en_core_web_sm")
+
 
 from src.preprocess import preprocess_dataframe
 from src.skill_extractor import extract_skills
