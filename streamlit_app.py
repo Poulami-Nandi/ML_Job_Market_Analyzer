@@ -97,27 +97,47 @@ def scrape_job_board(url):
     try:
         response = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
         soup = BeautifulSoup(response.text, 'html.parser')
+        job_cards = soup.find_all("li")
 
-        # Try to capture job cards (for generic job boards)
-        jobs = soup.find_all("li")
         job_list = []
-        for job in jobs:
-            title = job.find("h3") or job.find("h2") or job.find("a")
-            company = job.find("h4") or job.find("span", class_="company")
-            location = job.find("span", class_="location")
-            desc = job.get_text(separator=" ", strip=True)
+        for job in job_cards:
+            full_text = job.get_text(separator=" ", strip=True)
 
-            if title:
-                skills = extract_skills_from_text(desc)
-                job_list.append({
-                    "Company Name": company.get_text(strip=True) if company else "Unknown",
-                    "Job Title": title.get_text(strip=True)[:80],
-                    "Location": location.get_text(strip=True) if location else "Unknown",
-                    "Published Date": "Unknown",
-                    "Top Skills": ', '.join(skills.keys())
-                })
+            if any(skip in full_text for skip in [
+                "Privacy", "Cookie", "Policy", "Terms", "Copyright", "Guest Controls", "Accessibility"
+            ]):
+                continue
+
+            title_tag = job.find(["h3", "h2", "a"])
+            company_tag = job.find("h4") or job.find("span", class_="base-search-card__subtitle")
+            location_tag = job.find("span", class_="job-search-card__location")
+
+            title = title_tag.get_text(strip=True) if title_tag else ""
+            company = company_tag.get_text(strip=True) if company_tag else "Unknown"
+            location = location_tag.get_text(strip=True) if location_tag else "Unknown"
+
+            # Heuristic skip
+            if len(title) < 4 or title.lower() in ["about", "jobs", "people"]:
+                continue
+
+            # ✅ Extract skill frequency dict
+            skill_counts = extract_skills_from_text(full_text, return_counts=True)
+
+            if skill_counts:
+                top_skills_str = ", ".join(f"{k}({v})" for k, v in skill_counts.most_common(5))
+            else:
+                top_skills_str = "None Detected"
+
+            job_list.append({
+                "Company Name": company,
+                "Job Title": title[:100],
+                "Location": location,
+                "Published Date": "N/A",  # Could insert today's date or leave blank
+                "Top Skills": top_skills_str
+            })
 
         return pd.DataFrame(job_list)
+
     except Exception as e:
         st.error(f"❌ Error scraping job board: {e}")
         return pd.DataFrame()
