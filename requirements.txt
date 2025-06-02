@@ -17,3 +17,5 @@ pyarrow
 datasets
 
 # Language model for spaCy
+beautifulsoup4
+requests
