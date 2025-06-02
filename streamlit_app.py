@@ -11,90 +11,130 @@ import spacy
 
 # Load the model as a package (it’s installed with pip via requirements.txt)
 nlp = spacy.load("en_core_web_sm")
-
-
 from src.preprocess import preprocess_dataframe
 from src.skill_extractor import extract_skills
 
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+import os
+import requests
+from bs4 import BeautifulSoup
+
+# ---------------------
+# Page Configuration & Banner
+# ---------------------
 st.set_page_config(page_title="ML Job Market Analyzer", layout="wide")
-st.title("📈 ML Job Market Analyzer")
 
-# --- File Upload ---
-uploaded_file = st.file_uploader("Upload a job dataset (Parquet or CSV)", type=["csv", "parquet"])
+col1, col2 = st.columns([4, 1])
+with col1:
+    st.markdown("**👤 Created by:** Dr. Poulami Nandi  \n"
+                "Physicist · Quant Researcher · Data Scientist")
 
-if uploaded_file:
-    # Load dataset
-    if uploaded_file.name.endswith(".csv"):
-        df = pd.read_csv(uploaded_file)
-    else:
+    st.markdown("**🏛️ Affiliations:**  \n"
+                "[University of Pennsylvania](https://live-sas-physics.pantheon.sas.upenn.edu/people/poulami-nandi) · "
+                "[IIT Kanpur](https://www.iitk.ac.in/) · "
+                "[IIT Gandhinagar](https://www.usief.org.in/home-institution-india/indian-institute-of-technology-gandhinagar/) · "
+                "[UC Davis](https://www.ucdavis.edu/) · "
+                "[TU Wien](http://www.itp.tuwien.ac.at/CPT/index.htm?date=201838&cats=xbrbknmztwd)")
+
+    st.markdown("**📧 Email:**  \n"
+                "[nandi.poulami91@gmail.com](mailto:nandi.poulami91@gmail.com), "
+                "[pnandi@sas.upenn.edu](mailto:pnandi@sas.upenn.edu)")
+
+    st.markdown("**🔗 Links:**  \n"
+                "[LinkedIn](https://www.linkedin.com/in/poulami-nandi-a8a12917b/)  |  "
+                "[GitHub](https://github.com/Poulami-Nandi)  |  "
+                "[Google Scholar](https://scholar.google.co.in/citations?user=bOYJeAYAAAAJ&hl=en)")
+
+with col2:
+    st.image("https://github.com/Poulami-Nandi/IV_surface_analyzer/raw/main/images/own/own_image.jpg", width=100)
+
+# ---------------------
+# Sidebar Configuration
+# ---------------------
+st.sidebar.header("⚙️ Input Options")
+input_mode = st.sidebar.radio("Choose Input Mode", ["Upload Dataset", "Provide Web Link"])
+
+top_n_skills = st.sidebar.slider("Top N Skills to Display", min_value=5, max_value=30, value=10)
+enable_wordcloud = st.sidebar.checkbox("Show WordCloud", value=True)
+enable_barplot = st.sidebar.checkbox("Show Bar Chart", value=True)
+
+keywords = ["python", "sql", "tensorflow", "pytorch", "ml", "ai", "docker", "spark", "pandas", "sklearn"]
+
+# ---------------------
+# Helper Functions
+# ---------------------
+def extract_skills_from_text(text):
+    skill_counts = {}
+    for kw in keywords:
+        if kw in text.lower():
+            skill_counts[kw] = skill_counts.get(kw, 0) + 1
+    return skill_counts
+
+def scrape_job_description(url):
+    try:
+        response = requests.get(url, timeout=10)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        paragraphs = soup.find_all(['p', 'li', 'div'])
+        job_text = ' '.join(p.get_text(separator=' ', strip=True) for p in paragraphs)
+        return job_text
+    except Exception as e:
+        st.error(f"❌ Error fetching job description from URL: {e}")
+        return ""
+
+# ---------------------
+# Main Logic
+# ---------------------
+if input_mode == "Upload Dataset":
+    uploaded_file = st.file_uploader("Upload Job Dataset (.parquet)", type=["parquet"])
+    if uploaded_file:
         df = pd.read_parquet(uploaded_file)
+        df["description"] = df["description"].astype(str)
 
-    # Column renaming
-    rename_map = {
-        'job_title': 'title',
-        'job_posting': 'description',
-        'position_level': 'position_level',
-        'use_case': 'use_case',
-        'cover_letter': 'cover_letter'
-    }
-    df = df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns})
+        job_filter = st.sidebar.text_input("Keyword Filter (Job Titles / Description)", value="machine learning")
+        min_length = st.sidebar.slider("Minimum Description Length", 100, 1000, 300)
 
-    # Preprocess and extract skills
-    df = preprocess_dataframe(df)
-    df['skills'] = df['clean_description'].apply(extract_skills)
+        filtered_df = df[df["description"].str.contains(job_filter, case=False, na=False)]
+        filtered_df = filtered_df[filtered_df["description"].str.len() > min_length]
 
-    st.success("✅ Data loaded and processed successfully")
+        combined_text = " ".join(filtered_df["description"].tolist())
+        skill_counts = extract_skills_from_text(combined_text)
 
-    # Show raw and cleaned data
-    with st.expander("🔍 Preview Data"):
-        st.dataframe(df[['title', 'description', 'skills']].head())
+elif input_mode == "Provide Web Link":
+    url = st.text_input("Enter Job Posting URL")
+    if url:
+        job_description = scrape_job_description(url)
+        st.subheader("📄 Extracted Job Description (Preview)")
+        st.markdown(job_description[:2000] + "..." if len(job_description) > 2000 else job_description)
+        skill_counts = extract_skills_from_text(job_description)
 
-    # Skill frequency
-    all_skills = [s for skills in df['skills'] if isinstance(skills, list) for s in skills]
-    skill_counts = pd.Series(all_skills).value_counts()
-    top_skills = skill_counts.head(20)
+# ---------------------
+# Visualization
+# ---------------------
+if 'skill_counts' in locals() and skill_counts:
+    skill_df = pd.DataFrame.from_dict(skill_counts, orient="index", columns=["Count"])
+    skill_df = skill_df.sort_values(by="Count", ascending=False).head(top_n_skills)
 
-    # --- Word Cloud ---
-    st.subheader("☁️ Word Cloud of Skills")
-    wordcloud = WordCloud(width=1000, height=400, background_color="white").generate_from_frequencies(skill_counts)
-    fig_wc, ax = plt.subplots(figsize=(10, 4))
-    ax.imshow(wordcloud, interpolation='bilinear')
-    ax.axis("off")
-    st.pyplot(fig_wc)
+    st.subheader("📊 Extracted Skill Frequencies")
 
-    # --- Bar Chart ---
-    st.subheader("📊 Top 20 Skills by Frequency")
-    fig_bar, ax = plt.subplots(figsize=(12, 6))
-    sns.barplot(x=top_skills.values, y=top_skills.index, ax=ax, palette="viridis")
-    ax.set_xlabel("Frequency")
-    ax.set_ylabel("Skill")
-    st.pyplot(fig_bar)
+    if enable_barplot:
+        st.markdown("### 🔢 Top Skills by Frequency")
+        fig, ax = plt.subplots()
+        skill_df.plot(kind="barh", ax=ax, legend=False)
+        ax.invert_yaxis()
+        ax.set_xlabel("Frequency")
+        ax.set_title("Top Skills")
+        st.pyplot(fig)
 
-    # --- Heatmap ---
-    st.subheader("🔥 Skill Co-occurrence Heatmap")
-    def build_skill_matrix(skill_series, top_n=15):
-        top = skill_counts.head(top_n).index.tolist()
-        binary_matrix = []
-        for skills in skill_series:
-            row = [1 if s in skills else 0 for s in top]
-            binary_matrix.append(row)
-        return pd.DataFrame(binary_matrix, columns=top)
+    if enable_wordcloud:
+        st.markdown("### ☁️ Word Cloud of Top Skills")
+        wordcloud = WordCloud(width=800, height=400, background_color="white").generate_from_frequencies(skill_counts)
+        fig_wc, ax_wc = plt.subplots()
+        ax_wc.imshow(wordcloud, interpolation="bilinear")
+        ax_wc.axis("off")
+        st.pyplot(fig_wc)
 
-    skill_matrix = build_skill_matrix(df['skills'])
-    correlation = skill_matrix.corr()
-
-    fig_heatmap, ax = plt.subplots(figsize=(10, 8))
-    sns.heatmap(correlation, annot=True, cmap="coolwarm", ax=ax)
-    st.pyplot(fig_heatmap)
-
-    # --- Downloadable CSV ---
-    st.subheader("📥 Download Processed Results")
-    save_cols = [col for col in ['title', 'description', 'skills'] if col in df.columns]
-    st.download_button(
-        label="Download CSV",
-        data=df[save_cols].to_csv(index=False),
-        file_name="processed_skills.csv",
-        mime="text/csv"
-    )
 else:
-    st.info("👆 Upload a CSV or Parquet job dataset to get started.")
+    st.info("🔍 Awaiting input for analysis...")
