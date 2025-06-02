@@ -4,7 +4,7 @@ An interactive Streamlit dashboard that analyzes machine learning job listings a
 
 [![Streamlit App](https://img.shields.io/badge/Streamlit-Live_App-ff4b4b?logo=streamlit&logoColor=white)](https://mljobmarketanalyzer-fwxncqfv3ugxaxrq5zrxez.streamlit.app/)
 
-![Banner](https://github.com/Poulami-Nandi/IV_surface_analyzer/raw/main/images/own/own_image.jpg)
+<img src="https://github.com/Poulami-Nandi/IV_surface_analyzer/raw/main/images/own/own_image.jpg" alt="Poulami Nandi" width="180"/>
 
 ---
 
@@ -28,25 +28,62 @@ An interactive Streamlit dashboard that analyzes machine learning job listings a
 
 ## 🧪 Input Modes
 
-1. **Upload Dataset**:
-    - Upload a `.parquet` file with job descriptions (must have a 'description' column).
+### 1. 📁 Upload Dataset (Recommended)
 
-2. **Single Job Link**:
-    - Paste a URL to a specific job description.
-    - HTML is parsed, and skill keywords are extracted.
+Upload a `.parquet` file that includes at least a `description` column.  
+This triggers a detailed pipeline:
 
-3. **Job Board Page (Beta)**:
-    - Provide a link to a job search result (LinkedIn, Glassdoor, etc.).
-    - Requires `Selenium` for full dynamic content parsing.
+- Cleans and preprocesses all job descriptions
+- Scans for 30+ predefined ML/DS skills (e.g., Python, SQL, TensorFlow)
+- Displays:
+  - Top skill frequencies via a bar chart
+  - Word Cloud of skills
+  - A preview of the uploaded dataset
+
+**Sample Code Snippet:**
+
+```python
+uploaded_file = st.file_uploader("Upload a .parquet job listing file", type=["parquet"])
+if uploaded_file is not None:
+    df = pd.read_parquet(uploaded_file)
+
+    all_skills = Counter()
+    for text in df['description'].dropna():
+        all_skills += extract_skills_from_text(text, return_counts=True)
+
+    top_skills = all_skills.most_common(20)
+
+    st.bar_chart(pd.DataFrame(top_skills, columns=["Skill", "Count"]).set_index("Skill"))
+
+    wordcloud = WordCloud(width=800, height=400).generate_from_frequencies(all_skills)
+    st.image(wordcloud.to_array())
+```
+
+---
+
+### 2. 🔗 Single Job Link
+
+Paste a URL to a job post. The app fetches the content and scans for keywords, then displays:
+- Top skills with counts
+- Word Cloud
+
+---
+
+### 3. 🌐 Job Board Page (Beta)
+
+Paste a job board search results page link. Scrapes all listed jobs using `Selenium`. Output includes:
+- Company, title, location
+- Aggregated top skills and their frequency
+- Word cloud from all job posts
 
 ---
 
 ## 🛠️ Technologies Used
 
-- `Streamlit` for the web app UI
-- `BeautifulSoup` for parsing static job descriptions
-- `Selenium` for scraping dynamic job boards (JS-rendered pages)
-- `Pandas`, `Matplotlib`, `WordCloud`, `Counter` for analysis
+- `Streamlit` for web UI
+- `BeautifulSoup` + `requests` for basic scraping
+- `Selenium` for dynamic job boards
+- `pandas`, `Counter`, `matplotlib`, `wordcloud`
 
 ---
 
