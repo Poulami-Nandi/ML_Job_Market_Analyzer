@@ -1,131 +1,64 @@
-# 📈 ML Job Market Analyzer
+# 📊 ML Job Market Analyzer
 
-A Python-based NLP project that extracts and visualizes machine learning skills from real-world job descriptions. This tool helps you understand which tools, technologies, and roles are in demand by parsing job posting text, extracting skills using NLP, and generating charts and word clouds.
+An interactive Streamlit dashboard that analyzes machine learning job listings and extracts top skill trends across the industry.
 
----
+[![Streamlit App](https://img.shields.io/badge/Streamlit-Live_App-ff4b4b?logo=streamlit&logoColor=white)](https://mljobmarketanalyzer-fwxncqfv3ugxaxrq5zrxez.streamlit.app/)
 
-## 🚀 Project Highlights
-
-- 📄 Load job postings from Hugging Face datasets or Parquet files
-- 🧹 Clean and normalize job descriptions
-- 🧠 Extract in-demand ML skills using spaCy and custom keyword lists
-- 📊 Visualize top skills via bar charts and word clouds
-- 📦 Export structured outputs for use in dashboards or analysis
+![Banner](https://github.com/Poulami-Nandi/IV_surface_analyzer/raw/main/images/own/own_image.jpg)
 
 ---
 
-## 🗂 Project Structure
+## 🚀 Features
 
-```
-MLJobMarketAnalyzer/
-├── data/                     # Dataset files (e.g., .parquet or .csv)
-├── output/                   # Exported CSVs and processed data
-├── src/                      # Core logic modules
-│   ├── preprocess.py         # Cleaning text and job descriptions
-│   └── skill_extractor.py    # Skill extraction using NLP
-├── tests/                    # Unit tests for core modules
-│   └── test_src_modules.py   # Tests for text cleaning and skill extraction
-├── main.py                   # Entry-point script for local processing
-├── requirements.txt          # Python dependencies
-└── README.md                 # Project documentation (you are here)
-```
+- Upload your own job listings dataset (in `.parquet` format) and visualize key skills.
+- Extract skills from a **single job post URL** (LinkedIn, Glassdoor, etc.).
+- **[Beta]** Parse job board search result pages for bulk job extraction using `Selenium`.
+- WordCloud and frequency bar charts of top in-demand skills.
+- Streamlined interface via [Streamlit](https://streamlit.io).
 
 ---
 
-## 🧠 Core Modules
+## 🔍 Use Cases
 
-### 🔹 `src/preprocess.py`
-Functions:
-- `clean_text(text)` – Lowercases, removes punctuation, handles nulls
-- `preprocess_dataframe(df)` – Adds a `clean_description` column based on `description`
-
-### 🔹 `src/skill_extractor.py`
-Functions:
-- `extract_skills(text)` – Uses spaCy and a list of common ML skills to extract keywords
-
-Example list includes:
-```python
-["python", "sql", "machine learning", "deep learning", "tensorflow", "keras", ...]
-```
+- Identify top skills for ML roles in different companies or regions.
+- Compare how job market requirements shift across postings.
+- Extract keywords from public job boards and websites.
 
 ---
 
-## 🧪 Unit Tests
+## 🧪 Input Modes
 
-Tested with `unittest` in `tests/test_src_modules.py`:
-- Cleans text inputs correctly
-- Handles missing/empty strings
-- Extracts skills from various realistic job postings
+1. **Upload Dataset**:
+    - Upload a `.parquet` file with job descriptions (must have a 'description' column).
 
-Run tests using:
-```bash
-python -m unittest discover -s tests
-```
+2. **Single Job Link**:
+    - Paste a URL to a specific job description.
+    - HTML is parsed, and skill keywords are extracted.
 
----
-
-## 📊 Visual Output
-
-- **Word cloud** of most common skills
-- **Bar chart** for top N skills
-- **CSV export** with extracted skills per job
+3. **Job Board Page (Beta)**:
+    - Provide a link to a job search result (LinkedIn, Glassdoor, etc.).
+    - Requires `Selenium` for full dynamic content parsing.
 
 ---
 
-## 💾 How to Use
+## 🛠️ Technologies Used
 
-1. Install dependencies:
-```bash
-pip install -r requirements.txt
-python -m spacy download en_core_web_sm
-```
-
-2. (Optional) Load dataset from Hugging Face:
-```python
-from datasets import load_dataset
-
-# Load and convert to DataFrame
-ds = load_dataset("cmagganas/GenAI-job-postings-Dataset-sample")
-df = ds['train'].to_pandas()
-```
-
-3. Process the data:
-```bash
-python main.py
-```
-
-4. Output:
-- `output/sample_skills.csv` — extracted skills per job
-- word cloud + bar chart (opens in matplotlib window)
-
----
-
-## 📈 Use Cases
-
-- 📚 Educational tool to teach NLP + data cleaning
-- 📊 Job market research and skill demand tracking
-- 💼 Add to GitHub portfolio to showcase data pipeline and NLP skills
-
----
-
-## 🧩 Future Enhancements
-
-- [ ] Add BERTopic or LDA topic modeling
-- [ ] Streamlit dashboard interface
-- [ ] Salary and location-based visualizations
-- [ ] Integration with real-time job boards
+- `Streamlit` for the web app UI
+- `BeautifulSoup` for parsing static job descriptions
+- `Selenium` for scraping dynamic job boards (JS-rendered pages)
+- `Pandas`, `Matplotlib`, `WordCloud`, `Counter` for analysis
 
 ---
 
 ## 👤 Author
 
-**Poulami Nandi**  
-Postdoctoral Researcher • Data Scientist • Quant Researcher  
-🔗 [LinkedIn](https://www.linkedin.com/in/poulami-nandi/)  
-📫 nandi.poulami91@gmail.com
+**Dr. Poulami Nandi**  
+Physicist | Quant Researcher | Data Scientist  
+- 📧 Email: [nandi.poulami91@gmail.com](mailto:nandi.poulami91@gmail.com), [pnandi@sas.upenn.edu](mailto:pnandi@sas.upenn.edu)  
+- 🌐 [LinkedIn](https://www.linkedin.com/in/poulami-nandi-a8a12917b/) • [GitHub](https://github.com/Poulami-Nandi) • [Google Scholar](https://scholar.google.co.in/citations?user=bOYJeAYAAAAJ&hl=en)
 
 ---
 
-## 📜 License
+## 📎 License
 
-This project is licensed under the **MIT License** — free to use, modify, and share.
+This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
