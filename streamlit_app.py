@@ -55,7 +55,7 @@ with col2:
 # Sidebar Configuration
 # ---------------------
 st.sidebar.header("⚙️ Input Options")
-input_mode = st.sidebar.radio("Choose Input Mode", ["Upload Dataset", "Provide Web Link"])
+input_mode = st.sidebar.radio("Choose Input Mode", ["Upload Dataset", "Provide Web Link", "Job Board Link"])
 
 top_n_skills = st.sidebar.slider("Top N Skills to Display", min_value=5, max_value=30, value=10)
 enable_wordcloud = st.sidebar.checkbox("Show WordCloud", value=True)
@@ -84,6 +84,27 @@ def scrape_job_description(url):
         st.error(f"❌ Error fetching job description from URL: {e}")
         return ""
 
+def scrape_job_board(url):
+    try:
+        response = requests.get(url, timeout=10)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        jobs = soup.find_all("li")
+        job_list = []
+        for job in jobs:
+            text = job.get_text(separator=" ", strip=True)
+            skills = extract_skills_from_text(text)
+            job_list.append({
+                "Company Name": "Unknown",
+                "Job Title": text[:60],
+                "Location": "Unknown",
+                "Published Date": "Unknown",
+                "Top Skills": ', '.join(skills.keys())
+            })
+        return pd.DataFrame(job_list)
+    except Exception as e:
+        st.error(f"❌ Error reading job board: {e}")
+        return pd.DataFrame()
+
 # ---------------------
 # Main Logic
 # ---------------------
@@ -109,6 +130,17 @@ elif input_mode == "Provide Web Link":
         st.subheader("📄 Extracted Job Description (Preview)")
         st.markdown(job_description[:2000] + "..." if len(job_description) > 2000 else job_description)
         skill_counts = extract_skills_from_text(job_description)
+
+elif input_mode == "Job Board Link":
+    board_url = st.text_input("Enter Job Board URL")
+    if board_url:
+        board_df = scrape_job_board(board_url)
+        if not board_df.empty:
+            st.subheader("📋 Job Listings")
+            st.dataframe(board_df)
+
+            combined_board_text = " ".join(board_df["Job Title"].tolist())
+            skill_counts = extract_skills_from_text(combined_board_text)
 
 # ---------------------
 # Visualization
