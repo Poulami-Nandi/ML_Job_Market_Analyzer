@@ -73,6 +73,15 @@ def extract_skills_from_text(text):
             skill_counts[kw] = skill_counts.get(kw, 0) + 1
     return skill_counts
 
+from collections import Counter
+
+def extract_skills_from_text(text, return_counts=False):
+    words = text.lower()
+    found = [kw for kw in keywords if kw in words]
+    if return_counts:
+        return Counter(found)
+    return {k: found.count(k) for k in set(found)}
+
 def scrape_job_description(url):
     try:
         response = requests.get(url, timeout=10)
