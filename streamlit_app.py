@@ -86,24 +86,33 @@ def scrape_job_description(url):
 
 def scrape_job_board(url):
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
         soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Try to capture job cards (for generic job boards)
         jobs = soup.find_all("li")
         job_list = []
         for job in jobs:
-            text = job.get_text(separator=" ", strip=True)
-            skills = extract_skills_from_text(text)
-            job_list.append({
-                "Company Name": "Unknown",
-                "Job Title": text[:60],
-                "Location": "Unknown",
-                "Published Date": "Unknown",
-                "Top Skills": ', '.join(skills.keys())
-            })
+            title = job.find("h3") or job.find("h2") or job.find("a")
+            company = job.find("h4") or job.find("span", class_="company")
+            location = job.find("span", class_="location")
+            desc = job.get_text(separator=" ", strip=True)
+
+            if title:
+                skills = extract_skills_from_text(desc)
+                job_list.append({
+                    "Company Name": company.get_text(strip=True) if company else "Unknown",
+                    "Job Title": title.get_text(strip=True)[:80],
+                    "Location": location.get_text(strip=True) if location else "Unknown",
+                    "Published Date": "Unknown",
+                    "Top Skills": ', '.join(skills.keys())
+                })
+
         return pd.DataFrame(job_list)
     except Exception as e:
-        st.error(f"❌ Error reading job board: {e}")
+        st.error(f"❌ Error scraping job board: {e}")
         return pd.DataFrame()
+
 
 # ---------------------
 # Main Logic
